@@ -69,23 +69,8 @@ if isfield(params, 'plotType')
     plotFlag = 0;
     params.plotType = params.plotType || plotFlag;
     if params.plotType == 1
-        tiledlayout(3, 4);
-        
-        nexttile([2 1]);
-        cumFreq = sum(sMag, 2);
-        plot(cumFreq, 'LineWidth', 1.5); view([-90 90]);
-        title('Spectrum');
-        
-        nexttile([2 3]);
-        plotSpectrogram(t, f, sMag, modeTitle);
-        
-        nexttile();
-        axis off;
-        
-        nexttile([1 3]);
-        time = linspace(1, length(x)/params.Fs, length(x));
-        plot(time, x);
-        xlabel('Time (s)'); title('Time Domain Waveform');
+        time = linspace(0, length(x)/params.Fs, length(x));
+        tiledPlot(x, sMag, t, time, f, modeTitle);
     else
         figure;
         plotSpectrogram(t, f, sMag, modeTitle);
@@ -100,7 +85,28 @@ if isfield(params, 'zoom')
     params.zoom = params.zoom || zoomFlag;
     if params.zoom == 1
         if isfield(params, 'zoomTimeRange') && isfield(params, 'zoomFreqRange')
+            tmp = find(time >= params.zoomTimeRange(1));
+            samples = tmp(1);
+            tmp = find(time <= params.zoomTimeRange(2));
+            samples = samples : tmp(end);
+            timeZoom = time(samples);
+            xZoom = x(samples);
             
+            tmp = find(t >= params.zoomTimeRange(1));
+            tSamples = tmp(1);
+            tmp = find(t <= params.zoomTimeRange(2));
+            tSamples = tSamples : tmp(end);
+            tZoom = t(tSamples);
+
+            tmp = find(f >= params.zoomFreqRange(1));
+            fSamples = tmp(1);
+            tmp = find(f <= params.zoomFreqRange(2));
+            fSamples = fSamples : tmp(end);
+            fZoom = f(fSamples);
+            sMagZoom = sMag(fSamples, tSamples);
+            
+            modeTitle = [modeTitle, ' and zoomed'];
+            tiledPlot(xZoom, sMagZoom, tZoom, timeZoom, fZoom, modeTitle);
         else
             error('Please enter all the values for zooming!');
         end
