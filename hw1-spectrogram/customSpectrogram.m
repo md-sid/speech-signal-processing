@@ -10,7 +10,10 @@ function [s, f, t] = customSpectrogram(x, params)
 %   params is a structure array containing the following parameters:
 %       params.Fs: sampling frequency in Hz
 %       params.nFFT: number of frequency points to calculate DFT
-%       params.window: type of windowing (hanning, rectangular, etc.)
+%       params.window: is a 1x2 row vector where first value specifies the
+%           type of window and the second value gives the window length.
+%           0 for hanning, 1 for hamming, 2 for rectwin, 3 for
+%           kaiser, 4 for chebwin
 %       params.nOverlap: number of overlap of samples in adjoining segments
 %       params.fssT: 1 to use Fourier synchrosqueezed transform instead of
 %           FFT. Default value is 0
@@ -18,15 +21,29 @@ function [s, f, t] = customSpectrogram(x, params)
 %           time domain waveform, and colorbar. 0 to view only spectrogram.
 %       params.zoom: 1 to zoom into the spectrogram. Default value is 0
 %       params.zoomTimeRange: start and end of time to be zoomed into. Put
-%       the values in a row vector. NOTE: params.zoom must be 1
+%       the values in a 1x2 row vector. NOTE: params.zoom must be 1
 %       params.zoomFreqRange: start and end of frequency to be zoomed into.
-%       Put the values in a row vector. NOTE: params.zoom must be 1
+%       Put the values in a 1x2 row vector. NOTE: params.zoom must be 1
 %   NOTE: params.Fs, params.nFFT, params.window, and params.nOverlap are
 %   reuired. Rest of the parameters will use default values unless
 %   otherwise specified.
 % 
 
-windowSize = length(params.window);
+windowSize = params.window(2);
+if params.window(1) == 0
+    params.window = hanning(params.window(2));
+elseif params.window(1) == 1
+    params.window = hamming(params.window(2));
+elseif params.window(1) == 2
+    params.window = rectwin(params.window(2));
+elseif params.window(1) == 3
+    params.window = kaiser(params.window(2));
+elseif params.window(1) == 4
+    params.window = chebwin(params.window(2));
+else
+    error('Please specify window properly!');
+end
+
 step = windowSize - params.nOverlap;
 blocks = 1 : step : length(x) - windowSize;
 
@@ -40,37 +57,25 @@ if isfield(params, 'fsst')
     fsstFlag = 0;
     params.fsst = params.fsst || fsstFlag;
     if params.fsst == 1
-        s = fsst(x, params.Fs);
+        [s, f, t] = fsst(x, params.Fs);
         modeTitle = ' with FSST';
     else
-        s = fft(windowedMatrix);
+        [s, f, t] = fftWindowedMatrix(windowedMatrix, blocks, params);
         modeTitle = ' with FFT';
     end
 else
-    s = fft(windowedMatrix);
+    [s, f, t] = fftWindowedMatrix(windowedMatrix, blocks, params);
     modeTitle = ' with FFT';
 end
 
-% keep first half of the data as they are symmetric
-if rem(params.nFFT, 2) == 1
-    keepData = (params.nFFT + 1) / 2;
-else
-    keepData = params.nFFT / 2;
-end
-s = s(1 : keepData, :);
-
-f = (0 : keepData - 1)*params.Fs / params.nFFT;
-
-t = blocks / params.Fs;
-
-sMag = abs(s)/max(max(abs(s)));
+sMag = abs(s)/max(max(abs(s)));     % normalize
 
 if isfield(params, 'plotType')
     plotFlag = 0;
     params.plotType = params.plotType || plotFlag;
     if params.plotType == 1
         time = linspace(0, length(x)/params.Fs, length(x));
-        tiledPlot(x, sMag, t, time, f, modeTitle);
+        tiledPlot(x, sMag, params.Fs, t, time, f, modeTitle, 0);
     else
         figure;
         plotSpectrogram(t, f, sMag, modeTitle);
@@ -106,7 +111,7 @@ if isfield(params, 'zoom')
             sMagZoom = sMag(fSamples, tSamples);
             
             modeTitle = [modeTitle, ' and zoomed'];
-            tiledPlot(xZoom, sMagZoom, tZoom, timeZoom, fZoom, modeTitle);
+            tiledPlot(xZoom, sMagZoom, params.Fs, tZoom, timeZoom, fZoom, modeTitle, 1);
         else
             error('Please enter all the values for zooming!');
         end
