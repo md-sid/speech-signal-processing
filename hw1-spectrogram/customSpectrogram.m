@@ -1,6 +1,5 @@
 function [s, f, t] = customSpectrogram(x, params)
-%customSpectrogram is a custom spectrogram generator using a Short-Time
-%Fourier Transform. 
+%customSpectrogram is a custom spectrogram generator using a FFT or FSST.
 % 
 %   Usage: [s, f, t] = customSpectrogram(x, params)
 %   s is the matrix of returned spectrogram
