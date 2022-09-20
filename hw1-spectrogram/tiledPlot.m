@@ -20,7 +20,7 @@ if zoomFlag == 1
     ff = ff(fSamples);
     P1 = P1(fSamples);
 end
-plot(ff, P1); view([-90 90]);
+plot(ff, 20 * log10(P1)); view([-90 90]);
 title('Spectrum');
 
 nexttile(2, [2 3]);
