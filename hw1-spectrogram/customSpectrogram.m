@@ -15,7 +15,7 @@ function [s, f, t] = customSpectrogram(x, params)
 %           0 for hanning, 1 for hamming, 2 for rectwin, 3 for
 %           kaiser, 4 for chebwin
 %       params.nOverlap: number of overlap of samples in adjoining segments
-%       params.fssT: 1 to use Fourier synchrosqueezed transform instead of
+%       params.fsst: 1 to use Fourier synchrosqueezed transform instead of
 %           FFT. Default value is 0
 %       params.plotType: 1 to view in a tiled layout containing spectrum,
 %           time domain waveform, and colorbar. 0 to view only spectrogram.
