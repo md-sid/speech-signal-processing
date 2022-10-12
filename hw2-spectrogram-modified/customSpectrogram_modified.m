@@ -1,13 +1,12 @@
-function [s, f, t] = customSpectrogram(x, params)
-%customSpectrogram is a custom spectrogram generator using a FFT or FSST.
+function [s, f, t] = customSpectrogram_modified(timitFilename, params)
+%customSpectrogram_modified is a custom spectrogram generator using a FFT or FSST.
 % 
 %   Usage: [s, f, t] = customSpectrogram(x, params)
 %   s is the matrix of returned spectrogram
 %   f is the vector of frequencies at which spectrogram is computed
 %   t is the vector of times at which spectrogram is computed
-%   x is the sample vector
+%   timitFilename is the filename from TIMIT dataset with location
 %   params is a structure array containing the following parameters:
-%       params.Fs: sampling frequency in Hz
 %       params.nFFT: number of frequency points to calculate DFT
 %       params.window: is a 1x2 row vector where first value specifies the
 %           type of window and the second value gives the window length.
@@ -18,15 +17,14 @@ function [s, f, t] = customSpectrogram(x, params)
 %           FFT. Default value is 0
 %       params.plotType: 1 to view in a tiled layout containing spectrum,
 %           time domain waveform, and colorbar. 0 to view only spectrogram.
-%       params.zoom: 1 to zoom into the spectrogram. Default value is 0
-%       params.zoomTimeRange: start and end of time to be zoomed into. Put
-%       the values in a 1x2 row vector. NOTE: params.zoom must be 1
-%       params.zoomFreqRange: start and end of frequency to be zoomed into.
-%       Put the values in a 1x2 row vector. NOTE: params.zoom must be 1
-%   NOTE: params.Fs, params.nFFT, params.window, and params.nOverlap are
+%   NOTE: params.nFFT, params.window, and params.nOverlap are
 %   reuired. Rest of the parameters will use default values unless
 %   otherwise specified.
 % 
+
+timitData = processTimitFile(timitFilename);
+x = timitData.waveform; % audio data
+params.Fs = 16000;  % 16000 sampling rate for TIMIT dataset
 
 windowSize = params.window(2);
 if params.window(1) == 0
@@ -57,14 +55,11 @@ if isfield(params, 'fsst')
     params.fsst = params.fsst || fsstFlag;
     if params.fsst == 1
         [s, f, t] = fsst(x, params.Fs);
-        modeTitle = ' with FSST';
     else
         [s, f, t] = fftWindowedMatrix(windowedMatrix, blocks, params);
-        modeTitle = ' with FFT';
     end
 else
     [s, f, t] = fftWindowedMatrix(windowedMatrix, blocks, params);
-    modeTitle = ' with FFT';
 end
 
 sMag = abs(s)/max(max(abs(s)));     % normalize
@@ -74,49 +69,14 @@ if isfield(params, 'plotType')
     params.plotType = params.plotType || plotFlag;
     if params.plotType == 1
         time = linspace(0, length(x)/params.Fs, length(x));
-        tiledPlot(x, sMag, params.Fs, t, time, f, modeTitle, 0);
+        tiledPlot_modified(x, sMag, params.Fs, t, f, timitData, 0);
     else
         figure;
-        plotSpectrogram(t, f, sMag, modeTitle);
+        plotSpectrogram_modified(t, f, sMag, timitData);
     end
 else
     figure;
-    plotSpectrogram(t, f, sMag, modeTitle);
-end
-
-if isfield(params, 'zoom')
-    zoomFlag = 0;
-    params.zoom = params.zoom || zoomFlag;
-    if params.zoom == 1
-        if isfield(params, 'zoomTimeRange') && isfield(params, 'zoomFreqRange')
-            tmp = find(time >= params.zoomTimeRange(1));
-            samples = tmp(1);
-            tmp = find(time <= params.zoomTimeRange(2));
-            samples = samples : tmp(end);
-            timeZoom = time(samples);
-            xZoom = x(samples);
-            
-            tmp = find(t >= params.zoomTimeRange(1));
-            tSamples = tmp(1);
-            tmp = find(t <= params.zoomTimeRange(2));
-            tSamples = tSamples : tmp(end);
-            tZoom = t(tSamples);
-
-            tmp = find(f >= params.zoomFreqRange(1));
-            fSamples = tmp(1);
-            tmp = find(f <= params.zoomFreqRange(2));
-            fSamples = fSamples : tmp(end);
-            fZoom = f(fSamples);
-            sMagZoom = sMag(fSamples, tSamples);
-            
-            modeTitle = [modeTitle, ' and zoomed'];
-            tiledPlot(xZoom, sMagZoom, params.Fs, tZoom, timeZoom, fZoom, modeTitle, 1);
-        else
-            error('Please enter all the values for zooming!');
-        end
-
-    end
-
+    plotSpectrogram_modified(t, f, sMag, timitData);
 end
 
 end
