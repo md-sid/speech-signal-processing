@@ -1,6 +1,6 @@
 function [s, f, t] = fftWindowedMatrix(windowedMatrix, blocks, params)
 %[s, f, t] = fftWindowedMatrix(windowedMatrix, blocks, params) is a helper
-%function for customSpectrogram
+%function for customSpectrogram_modified
 % 
 
 s = fft(windowedMatrix);
