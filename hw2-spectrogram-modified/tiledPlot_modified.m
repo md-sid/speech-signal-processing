@@ -55,6 +55,6 @@ for i = 1 : length(phonTimeStamps)
     text(center, max(waveform) + 200, phonData(i), 'FontSize', 8);
 end
 
-% linkaxes([ax2 ax3], 'xy');
+linkaxes([ax2 ax3], 'xy');
 
 end
